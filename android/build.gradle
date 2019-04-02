@@ -1,0 +1,39 @@
+
+buildscript {
+    repositories {
+        google()
+        jcenter()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.2.1'
+    }
+}
+
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion '25.0.0'
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 27
+        versionCode 1
+        versionName "1.0"
+    }
+    lintOptions {
+       warning 'InvalidPackage'
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'com.facebook.react:react-native:+'
+    implementation 'com.google.firebase:firebase-core:16.0.8'
+    implementation 'com.google.firebase:firebase-ml-vision:19.0.3'
+}
+  
