@@ -33,7 +33,5 @@ repositories {
 
 dependencies {
     compile 'com.facebook.react:react-native:+'
-    implementation 'com.google.firebase:firebase-core:16.0.8'
-    implementation 'com.google.firebase:firebase-ml-vision:19.0.3'
 }
   

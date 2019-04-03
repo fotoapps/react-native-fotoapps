@@ -17,14 +17,6 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.common.annotations.VisibleForTesting;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.ml.vision.FirebaseVision;
-import com.google.firebase.ml.vision.common.FirebaseVisionImage;
-import com.google.firebase.ml.vision.text.FirebaseVisionText;
-import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
-
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -42,7 +34,6 @@ import org.xdump.android.zinnia.Zinnia;
 public class RNFotoappsModule extends ReactContextBaseJavaModule {
 
 	private final ReactApplicationContext ctx;
-	private final FirebaseVisionTextRecognizer detector;
 
 	private static String DATA_PATH = Environment.getExternalStorageDirectory().toString() + File.separator;
 	private static final String OCRMODELS = "ocrmodels";
@@ -56,7 +47,6 @@ public class RNFotoappsModule extends ReactContextBaseJavaModule {
 	public RNFotoappsModule(ReactApplicationContext reactContext) {
 		super(reactContext);
 		ctx = reactContext;
-		detector = FirebaseVision.getInstance().getOnDeviceTextRecognizer();
 		this.DATA_PATH = reactContext.getFilesDir().getAbsolutePath() + File.separator;
 
 		prepareZinnia();
