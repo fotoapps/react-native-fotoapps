@@ -1,6 +1,7 @@
 
 package com.fotoapps.library;
 
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
@@ -18,6 +19,7 @@ import com.facebook.react.bridge.Callback;
 import com.facebook.react.common.annotations.VisibleForTesting;
 
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -25,6 +27,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -37,6 +41,7 @@ public class RNFotoappsModule extends ReactContextBaseJavaModule {
 
 	private static String DATA_PATH = Environment.getExternalStorageDirectory().toString() + File.separator;
 	private static final String OCRMODELS = "ocrmodels";
+    private static final String JAMODEL_ZIPPED = "handwriting-ja.zip";
 	private static final String JAMODEL = "handwriting-ja.model";
 	private long recognizer = 0;
 
@@ -153,15 +158,21 @@ public class RNFotoappsModule extends ReactContextBaseJavaModule {
 	}
 
 	private void prepareZinnia() {
-		Log.d(REACT_CLASS, "Preparing zinnia enviroment");
+		Log.d(REACT_CLASS, "Preparing zinnia environment");
 
-		try {
-			prepareDirectory(DATA_PATH + OCRMODELS);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		String ocrModelsPath = DATA_PATH + OCRMODELS;
 
-		copyZinniaModelFiles(OCRMODELS);
+        File dir = new File(ocrModelsPath);
+        if (!dir.exists()) {
+            if (!dir.mkdirs()) {
+                Log.e(REACT_CLASS, "ERROR: Creation of directory " + ocrModelsPath
+                        + " failed, check permission to write to external storage.");
+                return;
+            }
+            unZip(OCRMODELS + File.separator + JAMODEL_ZIPPED, ocrModelsPath);
+        } else {
+            Log.i(REACT_CLASS, "Existed directory " + ocrModelsPath);
+        }
 
 		recognizer = ZinniaCore.recognizerNew();
 	    if (ZinniaCore.recognizerOpen(recognizer, DATA_PATH + OCRMODELS + File.separator + JAMODEL) > 0) {
@@ -198,6 +209,51 @@ public class RNFotoappsModule extends ReactContextBaseJavaModule {
 			}
 		} catch (IOException e) {
 			Log.e(REACT_CLASS, "Unable to copy files to ocrmodels " + e.toString());
+		}
+	}
+
+	private void unZip(String fileName, String outputDirectory) {
+		AssetManager manager = ctx.getAssets();
+
+        Log.d(REACT_CLASS, "Unzip " + fileName + " to " + outputDirectory);
+		try {
+			BufferedInputStream bis = new BufferedInputStream(manager.open(fileName));
+			ZipInputStream zis = new ZipInputStream(bis);
+			// get the zipped file list entry
+			ZipEntry ze = zis.getNextEntry();
+
+			while (ze != null) {
+
+				String fileEntry = ze.getName();
+				File newFile = new File(outputDirectory + File.separator + fileEntry);
+
+				// create all non existent folders from zip archive
+				if (fileEntry.endsWith("/")) {
+					newFile.mkdirs();
+				}
+
+				// FileOutputStream fos = ctx.openFileOutput(newFile.getName(),0);
+                FileOutputStream fos = new FileOutputStream(newFile);
+
+				byte[] buffer = new byte[4096];
+				int length = 0;
+				while ((length = zis.read(buffer)) > 0) {
+
+					fos.write(buffer, 0, length);
+					fos.flush();
+				}
+                Log.d(REACT_CLASS, "Unzipped " + newFile.getName() + " to " + outputDirectory);
+				fos.close();
+				ze = zis.getNextEntry();
+
+			}
+			// close open resources
+			bis.close();
+			zis.closeEntry();
+			zis.close();
+
+		} catch (IOException ex) {
+			Log.v("Unzip", ex.toString());
 		}
 	}
 }
