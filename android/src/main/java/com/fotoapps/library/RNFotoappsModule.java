@@ -29,7 +29,7 @@ import java.util.Map;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.xdump.android.zinnia.Zinnia;
+import com.wanthings.ZinniaCore;
 
 public class RNFotoappsModule extends ReactContextBaseJavaModule {
 
@@ -38,7 +38,6 @@ public class RNFotoappsModule extends ReactContextBaseJavaModule {
 	private static String DATA_PATH = Environment.getExternalStorageDirectory().toString() + File.separator;
 	private static final String OCRMODELS = "ocrmodels";
 	private static final String JAMODEL = "handwriting-ja.model";
-	private final Zinnia zinnia = new Zinnia();
 	private long recognizer = 0;
 
 	@VisibleForTesting
@@ -68,32 +67,9 @@ public class RNFotoappsModule extends ReactContextBaseJavaModule {
 	public void recognize(String jsonPaths, final Promise promise) {
 		Log.d(REACT_CLASS, "Start ocr");
 
-	    long character = zinnia.zinnia_character_new();
+	    long character = ZinniaCore.characterNew();
 
-		zinnia.zinnia_character_clear(character);
-
-		// test
-		// zinnia.zinnia_character_set_width(character, 300);
-		// zinnia.zinnia_character_set_height(character, 300);
-		// zinnia.zinnia_character_add(character, 0, 51, 29);
-		// zinnia.zinnia_character_add(character, 0, 117, 41);
-		// zinnia.zinnia_character_add(character, 1, 99, 65);
-		// zinnia.zinnia_character_add(character, 1, 219, 77);
-		// zinnia.zinnia_character_add(character, 2, 27, 131);
-		// zinnia.zinnia_character_add(character, 2, 261, 131);
-		// zinnia.zinnia_character_add(character, 3, 129, 17);
-		// zinnia.zinnia_character_add(character, 3, 57, 203);
-		// zinnia.zinnia_character_add(character, 4, 111, 71);
-		// zinnia.zinnia_character_add(character, 4, 219, 173);
-		// zinnia.zinnia_character_add(character, 5, 81, 161);
-		// zinnia.zinnia_character_add(character, 5, 93, 281);
-		// zinnia.zinnia_character_add(character, 6, 99, 167);
-		// zinnia.zinnia_character_add(character, 6, 207, 167);
-		// zinnia.zinnia_character_add(character, 6, 189, 245);
-		// zinnia.zinnia_character_add(character, 7, 99, 227);
-		// zinnia.zinnia_character_add(character, 7, 189, 227);
-		// zinnia.zinnia_character_add(character, 8, 111, 257);
-		// zinnia.zinnia_character_add(character, 8, 189, 245);
+		ZinniaCore.characterClear(character);
 
 		try {
 			// parse json
@@ -110,8 +86,8 @@ public class RNFotoappsModule extends ReactContextBaseJavaModule {
 					width = size.getLong("width");
 					height = size.getLong("height");
 
-					zinnia.zinnia_character_set_width(character, width);
-					zinnia.zinnia_character_set_height(character, height);
+					ZinniaCore.characterSetWidth(character, width);
+					ZinniaCore.characterSetHeight(character, height);
 
 					Log.d(REACT_CLASS, "---- Zinnia width: " + width + "   height: " + height);
 				}
@@ -129,26 +105,26 @@ public class RNFotoappsModule extends ReactContextBaseJavaModule {
 						Log.d(REACT_CLASS, "---- Zinnia path splitted x: " + x);
 						int y = (int)Double.parseDouble(xyArr[1]);
 						Log.d(REACT_CLASS, "---- Zinnia path splitted y: " + y);
-						zinnia.zinnia_character_add(character, i, x, y);
+						ZinniaCore.characterAdd(character, i, x, y);
 						Log.d(REACT_CLASS, "---- Zinnia path splitted: " + x + "   " + y);
 					}
 				}
 			}
 
-			long result = zinnia.zinnia_recognizer_classify(recognizer, character, 10);
+			long result = ZinniaCore.recognizerClassify(recognizer, character, 10);
 
-			Log.d(REACT_CLASS, "---- Zinnia error: " + zinnia.zinnia_recognizer_strerror(recognizer));
+			Log.d(REACT_CLASS, "---- Zinnia error: " + ZinniaCore.recognizerStrerror(recognizer));
 			if (result != 0) {
-				long resultSize = zinnia.zinnia_result_size(result);
+				long resultSize = ZinniaCore.resultSize(result);
 				String recognizedResult = "";
 				for (int i = 0; i < resultSize; ++i) {
-					recognizedResult += zinnia.zinnia_result_value(result, i);
+					recognizedResult += ZinniaCore.resultValue(result, i);
 					if (i < resultSize - 1) {
 						recognizedResult += ",";
 					}
 				}
 
-				zinnia.zinnia_result_destroy(result);
+				ZinniaCore.resultDestroy(result);
 				promise.resolve(recognizedResult);
 			} else {
 				promise.reject("An error occurred", "Can not recognize");
@@ -157,8 +133,7 @@ public class RNFotoappsModule extends ReactContextBaseJavaModule {
 			promise.reject("An error occurred", "Can not get path from json");
 		}
 		
-		zinnia.zinnia_character_destroy(character);
-		// zinnia.zinnia_result_destroy(recognizer);
+		ZinniaCore.characterDestroy(character);
 	}
 
 	private String extractText(String path) {		 
@@ -188,8 +163,8 @@ public class RNFotoappsModule extends ReactContextBaseJavaModule {
 
 		copyZinniaModelFiles(OCRMODELS);
 
-		recognizer = zinnia.zinnia_recognizer_new();
-	    if (zinnia.zinnia_recognizer_open(recognizer, DATA_PATH + OCRMODELS + File.separator + JAMODEL) > 0) {
+		recognizer = ZinniaCore.recognizerNew();
+	    if (ZinniaCore.recognizerOpen(recognizer, DATA_PATH + OCRMODELS + File.separator + JAMODEL) > 0) {
 	    	Log.d(REACT_CLASS, "Initialize zinnia recognizer done");
 	    } else {
 	    	Log.d(REACT_CLASS, "Cannot open recognizer model");
